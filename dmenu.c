@@ -67,7 +67,7 @@ incontent(char **tokv, int checkv[50], int checkc, char *fname) {
 	char line[1024];
 	int i;
 	fp = fopen(fname, "r");
-	while (fgets(line, 1024, fp) != NULL){
+	while (fgets(line, 1024, fp) && checkc){
 		for (i = 0; i < checkc; i++){
 			if (fstrstr(line, tokv[checkv[i]])){
 				checkc--;
@@ -77,7 +77,7 @@ incontent(char **tokv, int checkv[50], int checkc, char *fname) {
 		}
 	}
 	fclose(fp);
-	return (!checkc);
+	return (checkc);
 }
 
 
@@ -269,7 +269,7 @@ match(void)
 				break;
 			}
 		}
-		if (cur && !(content && incontent(tokv, unmatched, cur++, item->text))) continue;
+		if (cur && !(content && !incontent(tokv, unmatched, cur++, item->text))) continue;
 		/* exact matches go first, then prefixes, then substrings */
 		if (!tokc || !fstrncmp(text, item->text, textsize))
 			appenditem(item, &matches, &matchend);
