@@ -58,6 +58,29 @@ static Clr *scheme[SchemeLast];
 static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
 static char *(*fstrstr)(const char *, const char *) = strstr;
 
+/* Mine */
+static int content = 0;
+
+static int
+incontent(char **tokv, int checkv[50], int checkc, char *fname) {
+	FILE *fp;
+	char line[1024];
+	int i;
+	fp = fopen(fname, "r");
+	while (fgets(line, 1024, fp) != NULL){
+		for (i = 0; i < checkc; i++){
+			if (fstrstr(line, tokv[checkv[i]])){
+				checkc--;
+				checkv[i] = checkv[checkc];
+				i--;
+			}
+		}
+	}
+	fclose(fp);
+	return (!checkc);
+}
+
+
 static void
 appenditem(struct item *item, struct item **list, struct item **last)
 {
@@ -217,9 +240,11 @@ match(void)
 	static int tokn = 0;
 
 	char buf[sizeof text], *s;
-	int i, tokc = 0;
+	int i, tokc = 0, cur;
 	size_t len, textsize;
 	struct item *item, *lprefix, *lsubstr, *prefixend, *substrend;
+
+	int unmatched[50]; 
 
 	strcpy(buf, text);
 	/* separate input text into tokens to be matched individually */
@@ -231,11 +256,20 @@ match(void)
 	matches = lprefix = lsubstr = matchend = prefixend = substrend = NULL;
 	textsize = strlen(text) + 1;
 	for (item = items; item && item->text; item++) {
-		for (i = 0; i < tokc; i++)
-			if (!fstrstr(item->text, tokv[i]))
+		if (content) memset(unmatched, 0, 50);
+		cur = 0;
+		for (i = 0; i < tokc; i++){
+			if (!fstrstr(item->text, tokv[i])){
+				if(content){
+					unmatched[cur] = i;
+					cur++;
+					continue;
+				}
+				cur++;
 				break;
-		if (i != tokc) /* not all tokens match */
-			continue;
+			}
+		}
+		if (cur && !(content && incontent(tokv, unmatched, cur++, item->text))) continue;
 		/* exact matches go first, then prefixes, then substrings */
 		if (!tokc || !fstrncmp(text, item->text, textsize))
 			appenditem(item, &matches, &matchend);
@@ -465,13 +499,13 @@ insert:
 	case XK_Return:
 	case XK_KP_Enter:
 		puts((sel && !(ev->state & ShiftMask)) ? sel->text : text);
-		if (!(ev->state & ControlMask)) {
-			cleanup();
-			exit(0);
+ 		if (!(ev->state & ControlMask)) {
+ 			cleanup();
+ 			exit(0);
 		}
-		if (sel)
-			sel->out = 1;
-		break;
+ 		if (sel)
+ 			sel->out = 1;
+ 		break;
 	case XK_Right:
 		if (text[cursor] != '\0') {
 			cursor = nextrune(+1);
@@ -709,6 +743,8 @@ main(int argc, char *argv[])
 			topbar = 0;
 		else if (!strcmp(argv[i], "-f"))   /* grabs keyboard before reading stdin */
 			fast = 1;
+		else if (!strcmp(argv[i], "-c"))   /* mine: search in file content */
+			content = 1;
 		else if (!strcmp(argv[i], "-i")) { /* case-insensitive item matching */
 			fstrncmp = strncasecmp;
 			fstrstr = cistrstr;
