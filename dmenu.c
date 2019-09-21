@@ -248,7 +248,7 @@ match(void)
 	size_t len, textsize;
 	struct item *item, *lprefix, *lsubstr, *prefixend, *substrend;
 
-	int unmatched[50]; 
+	static int unmatched[50]; 
 
 	strcpy(buf, text);
 	/* separate input text into tokens to be matched individually */
@@ -267,13 +267,12 @@ match(void)
 				if(content){
 					unmatched[cur] = i;
 					cur++;
-					continue;
+				}else{
+					break;
 				}
-				cur++;
-				break;
 			}
 		}
-		if (cur && !(content && incontent(tokv, unmatched, cur++, item->text))) continue;
+		if (cur && !incontent(tokv, unmatched, cur++, item->text)) continue;
 		/* exact matches go first, then prefixes, then substrings */
 		if (!tokc || !fstrncmp(text, item->text, textsize))
 			appenditem(item, &matches, &matchend);
