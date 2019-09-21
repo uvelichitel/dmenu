@@ -63,21 +63,25 @@ static int content = 0;
 
 static int
 incontent(char **tokv, int checkv[50], int checkc, char *fname) {
-	FILE *fp;
-	char line[1024];
+	static FILE *fp = NULL;
+	static long length;
+	static void *buffer = NULL;
 	int i;
-	fp = fopen(fname, "r");
-	while (fgets(line, 1024, fp) && checkc){
-		for (i = 0; i < checkc; i++){
-			if (fstrstr(line, tokv[checkv[i]])){
-				checkc--;
-				checkv[i] = checkv[checkc];
-				i--;
-			}
+	static char *text = NULL;
+	fp=fopen(fname, "r");
+	if(fp){
+		fseek (fp, 0, SEEK_END);
+		length = ftell (fp);
+		fseek (fp, 0, SEEK_SET);
+		buffer = realloc (buffer, length);
+		if (buffer) fread (buffer, 1, length, fp);
+		fclose (fp);
+		text = (char*)buffer;
+		for(i = 0; i < checkc; i++){
+			if(!fstrstr(text, tokv[checkv[i]])) return 0;
 		}
 	}
-	fclose(fp);
-	return (checkc);
+	return 1;
 }
 
 
@@ -269,7 +273,7 @@ match(void)
 				break;
 			}
 		}
-		if (cur && !(content && !incontent(tokv, unmatched, cur++, item->text))) continue;
+		if (cur && !(content && incontent(tokv, unmatched, cur++, item->text))) continue;
 		/* exact matches go first, then prefixes, then substrings */
 		if (!tokc || !fstrncmp(text, item->text, textsize))
 			appenditem(item, &matches, &matchend);
