@@ -62,7 +62,7 @@ static char *(*fstrstr)(const char *, const char *) = strstr;
 static int content = 0;
 
 static int
-incontent(char **tokv, int checkv[50], int checkc, char *fname) {
+incontent(char **tokv, int check[50], char *fname) {
 	static FILE *fp = NULL;
 	static long length;
 	static void *buffer = NULL;
@@ -77,8 +77,8 @@ incontent(char **tokv, int checkv[50], int checkc, char *fname) {
 		if (buffer) fread (buffer, 1, length, fp);
 		fclose (fp);
 		text = (char*)buffer;
-		for(i = 0; i < checkc; i++){
-			if(!fstrstr(text, tokv[checkv[i]])) return 0;
+		for(i = 1; i <= check[0]; i++){
+			if(!fstrstr(text, tokv[check[i]])) return 0;
 		}
 	}
 	return 1;
@@ -241,10 +241,10 @@ static void
 match(void)
 {
 	static char **tokv = NULL;
-	static int tokn = 0;
+	static int tokn = 0, errn = 0;
 
 	char buf[sizeof text], *s;
-	int i, tokc = 0, cur = 0;
+	int i, tokc = 0;
 	size_t len, textsize;
 	struct item *item, *lprefix, *lsubstr, *prefixend, *substrend;
 
@@ -260,19 +260,24 @@ match(void)
 	matches = lprefix = lsubstr = matchend = prefixend = substrend = NULL;
 	textsize = strlen(text) + 1;
 	for (item = items; item && item->text; item++) {
+		errn = 0;
 		if (content) memset(unmatched, 0, 50);
-		cur = 0;
 		for (i = 0; i < tokc; i++){
 			if (!fstrstr(item->text, tokv[i])){
-				cur++;
+				errn++;
 				if(content){
-					unmatched[cur] = i;
+					unmatched[errn] = i;
 				}else{
 					break;
 				}
 			}
 		}
-		if (cur && !(content && incontent(tokv, unmatched, cur++, item->text))) continue;
+		if (errn){
+			if (content){
+				unmatched[0] = errn;
+		   	    if (!incontent(tokv, unmatched, item->text)) continue;
+			} else continue;
+		}
 		/* exact matches go first, then prefixes, then substrings */
 		if (!tokc || !fstrncmp(text, item->text, textsize))
 			appenditem(item, &matches, &matchend);
