@@ -244,7 +244,7 @@ match(void)
 	static int tokn = 0;
 
 	char buf[sizeof text], *s;
-	int i, tokc = 0, cur;
+	int i, tokc = 0, cur = 0;
 	size_t len, textsize;
 	struct item *item, *lprefix, *lsubstr, *prefixend, *substrend;
 
@@ -264,15 +264,15 @@ match(void)
 		cur = 0;
 		for (i = 0; i < tokc; i++){
 			if (!fstrstr(item->text, tokv[i])){
+				cur++;
 				if(content){
 					unmatched[cur] = i;
-					cur++;
 				}else{
 					break;
 				}
 			}
 		}
-		if (cur && !incontent(tokv, unmatched, cur++, item->text)) continue;
+		if (cur && !(content && incontent(tokv, unmatched, cur++, item->text))) continue;
 		/* exact matches go first, then prefixes, then substrings */
 		if (!tokc || !fstrncmp(text, item->text, textsize))
 			appenditem(item, &matches, &matchend);
