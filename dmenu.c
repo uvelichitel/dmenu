@@ -30,6 +30,7 @@ enum { SchemeNorm, SchemeSel, SchemeOut, SchemeLast }; /* color schemes */
 
 struct item {
 	char *text;
+	char *action;
 	struct item *left, *right;
 	int out;
 };
@@ -60,6 +61,7 @@ static char *(*fstrstr)(const char *, const char *) = strstr;
 
 /* Mine */
 static int content = 0;
+static char *delim = NULL;
 
 static int
 incontent(char **tokv, int check[50], char *fname) {
@@ -506,7 +508,11 @@ insert:
 		break;
 	case XK_Return:
 	case XK_KP_Enter:
-		puts((sel && !(ev->state & ShiftMask)) ? sel->text : text);
+		if ((ev->state & ShiftMask) || !sel){
+			puts(text);
+		}else{
+			puts((delim) ? sel->action : sel->text);
+		}
  		if (!(ev->state & ControlMask)) {
  			cleanup();
  			exit(0);
@@ -576,6 +582,13 @@ readstdin(void)
 			*p = '\0';
 		if (!(items[i].text = strdup(buf)))
 			die("cannot strdup %u bytes:", strlen(buf) + 1);
+		if (delim){
+			char *p = strstr(items[i].text, delim);
+			if (p != NULL){
+				*p = '\0';
+				items[i].action = p + strlen(delim);
+			}
+		}
 		items[i].out = 0;
 		drw_font_getexts(drw->fonts, buf, strlen(buf), &tmpmax, NULL);
 		if (tmpmax > inputw) {
@@ -731,8 +744,9 @@ setup(void)
 static void
 usage(void)
 {
-	fputs("usage: dmenu [-bcfiv] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
-	      "             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid]\n", stderr);
+	fputs("usage: dmenu [-bcfiv] [-l lines] [-p prompt] [-m monitor]\n"
+		  "             [-fn font] [-d delimiter] [-w windowid]\n"
+	      "             [-nb color] [-nf color] [-sb color] [-sf color]\n", stderr);
 	exit(1);
 }
 
@@ -753,6 +767,8 @@ main(int argc, char *argv[])
 			fast = 1;
 		else if (!strcmp(argv[i], "-c"))   /* mine: search in file content */
 			content = 1;
+		else if (!strcmp(argv[i], "-d"))
+			delim = argv[++i];
 		else if (!strcmp(argv[i], "-i")) { /* case-insensitive item matching */
 			fstrncmp = strncasecmp;
 			fstrstr = cistrstr;
