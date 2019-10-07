@@ -582,12 +582,9 @@ readstdin(void)
 			*p = '\0';
 		if (!(items[i].text = strdup(buf)))
 			die("cannot strdup %u bytes:", strlen(buf) + 1);
-		if (delim){
-			char *p = strstr(items[i].text, delim);
-			if (p != NULL){
-				*p = '\0';
-				items[i].action = p + strlen(delim);
-			}
+		if (delim && (p = strstr(items[i].text, delim))){
+			*p = '\0';
+			items[i].action = p + strlen(delim);
 		}
 		items[i].out = 0;
 		drw_font_getexts(drw->fonts, buf, strlen(buf), &tmpmax, NULL);
