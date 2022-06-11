@@ -1,5 +1,5 @@
 # dmenu version
-VERSION = 5.0
+VERSION = 5.1
 
 # paths
 PREFIX = /usr/home/uvelichitel/.local
@@ -17,6 +17,7 @@ FREETYPELIBS = -lfontconfig -lXft
 FREETYPEINC = /usr/local/include/freetype2
 # OpenBSD (uncomment)
 #FREETYPEINC = $(X11INC)/freetype2
+#MANPREFIX = ${PREFIX}/man
 
 # includes and libs
 INCS = -I$(X11INC) -I$(FREETYPEINC)
