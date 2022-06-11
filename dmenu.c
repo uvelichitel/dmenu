@@ -30,7 +30,6 @@ enum { SchemeNorm, SchemeSel, SchemeOut, SchemeLast }; /* color schemes */
 
 struct item {
 	char *text;
-	char *action;
 	struct item *left, *right;
 	int out;
 };
@@ -149,13 +148,13 @@ cistrstr(const char *h, const char *n)
 		return (char *)h;
 
 	for (; *h; ++h) {
-     	for (i = 0; n[i] && tolower((unsigned char)n[i]) ==
-     	            tolower((unsigned char)h[i]); ++i)
-     		;
+		for (i = 0; n[i] && tolower((unsigned char)n[i]) ==
+		            tolower((unsigned char)h[i]); ++i)
+			;
 		if (n[i] == '\0')
 			return (char *)h;
-    }
-    return NULL;
+	}
+	return NULL;
 }
 
 static int
@@ -533,18 +532,14 @@ insert:
 		break;
 	case XK_Return:
 	case XK_KP_Enter:
-		if ((ev->state & ShiftMask) || !sel){
-			puts(text);
-		}else{
-			puts((delim) ? sel->action : sel->text);
+		puts((sel && !(ev->state & ShiftMask)) ? sel->text : text);
+		if (!(ev->state & ControlMask)) {
+			cleanup();
+			exit(0);
 		}
- 		if (!(ev->state & ControlMask)) {
- 			cleanup();
- 			exit(0);
-		}
- 		if (sel)
- 			sel->out = 1;
- 		break;
+		if (sel)
+			sel->out = 1;
+		break;
 	case XK_Right:
 	case XK_KP_Right:
 		if (text[cursor] != '\0') {
@@ -608,10 +603,6 @@ readstdin(void)
 			*p = '\0';
 		if (!(items[i].text = strdup(buf)))
 			die("cannot strdup %u bytes:", strlen(buf) + 1);
-		if (delim && (p = strstr(items[i].text, delim))){
-			*p = '\0';
-			items[i].action = p + strlen(delim);
-		}
 		items[i].out = 0;
 	}
 	if (items)
@@ -783,8 +774,6 @@ main(int argc, char *argv[])
 			fast = 1;
 		else if (!strcmp(argv[i], "-c"))   /* mine: search in file content */
 			content = 1;
-		else if (!strcmp(argv[i], "-d"))
-			delim = argv[++i];
 		else if (!strcmp(argv[i], "-i")) { /* case-insensitive item matching */
 			fstrncmp = strncasecmp;
 			fstrstr = cistrstr;
