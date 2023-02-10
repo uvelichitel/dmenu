@@ -2,11 +2,11 @@
 VERSION = 5.2
 
 # paths
-PREFIX = /usr/home/uvelichitel/.local
+PREFIX = /home/uvelichitel/.local
 MANPREFIX = $(PREFIX)/share/man
 
-X11INC = /usr/local/include
-X11LIB = /usr/local/lib
+X11INC = /usr/include
+X11LIB = /usr/lib
 
 # Xinerama, comment if you don't want it
 XINERAMALIBS  = -lXinerama
@@ -14,7 +14,7 @@ XINERAMAFLAGS = -DXINERAMA
 
 # freetype
 FREETYPELIBS = -lfontconfig -lXft
-FREETYPEINC = /usr/local/include/freetype2
+FREETYPEINC = /usr/include/freetype2
 # OpenBSD (uncomment)
 #FREETYPEINC = $(X11INC)/freetype2
 #MANPREFIX = ${PREFIX}/man
